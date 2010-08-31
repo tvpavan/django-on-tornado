@@ -10,8 +10,8 @@ Instructions
 ============
 
  1. ``cd myproject``
- 3. ``python manage.py runtornado --reload``
- 4. Go to: http://localhost:8000/
+ 2. ``python manage.py runtornado --reload``
+ 3. Go to: http://localhost:8000/
 
 Now you have a working chat server -- this is based on the NodeJS chat server, UI primarily.
 
