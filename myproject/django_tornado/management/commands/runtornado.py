@@ -171,6 +171,8 @@ class DjangoHandler(tornado.web.RequestHandler, base.BaseHandler) :
         self.set_status(response.status_code)
         for h in response.items() :
             self.set_header(h[0], h[1])
+        for c in response.cookies.values() :
+            self.set_header('Set-Cookie', str(c.output(header='')))
 
         self.write(response.content)
         self.finish()
