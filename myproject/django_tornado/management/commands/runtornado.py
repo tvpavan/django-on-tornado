@@ -98,6 +98,17 @@ class Command(BaseCommand):
                                                 no_keep_alive=no_keep_alive)
                 http_server.listen(int(port), address=addr)
 
+                #
+                #
+                #
+                if hasattr(settings, 'TORNADO_STARTUP') :
+                    from django.utils.importlib import import_module
+                    for obj in settings.TORNADO_STARTUP :
+                        # TODO - check to see if string or object
+                        idx = obj.rindex('.')
+                        func = getattr(import_module(obj[:idx]), obj[idx+1:])
+                        func()
+
                 ioloop.IOLoop.instance().start()
             except KeyboardInterrupt:
                 if shutdown_message:
@@ -138,8 +149,10 @@ class DjangoHandler(tornado.web.RequestHandler, base.BaseHandler) :
     def get(self) :
         from tornado.wsgi import HTTPRequest, WSGIContainer
         from django.core.handlers.wsgi import WSGIRequest, STATUS_CODE_TEXT
+        import urllib
 
         environ  = WSGIContainer.environ(self.request)
+        environ['PATH_INFO'] = urllib.unquote(environ['PATH_INFO'])
         request  = WSGIRequest(environ)
 
         request._tornado_handler     = self
