@@ -146,6 +146,9 @@ class DjangoHandler(tornado.web.RequestHandler, base.BaseHandler) :
         self.initLock.release()
         self._auto_finish = False
 
+    def head(self) :
+        self.get()
+
     def get(self) :
         from tornado.wsgi import HTTPRequest, WSGIContainer
         from django.core.handlers.wsgi import WSGIRequest, STATUS_CODE_TEXT
@@ -177,15 +180,14 @@ class DjangoHandler(tornado.web.RequestHandler, base.BaseHandler) :
         except KeyError:
             status_text = 'UNKNOWN STATUS CODE'
         status = '%s %s' % (response.status_code, status_text)
-        response_headers = [(str(k), str(v)) for k, v in response.items()]
-        for c in response.cookies.values():
-            response_headers.append(('Set-Cookie', str(c.output(header=''))))
 
         self.set_status(response.status_code)
         for h in response.items() :
             self.set_header(h[0], h[1])
-        for c in response.cookies.values() :
-            self.set_header('Set-Cookie', str(c.output(header='')))
+
+        if not hasattr(self, "_new_cookies"):
+            self._new_cookies = []
+        self._new_cookies.append(response.cookies)
 
         self.write(response.content)
         self.finish()
