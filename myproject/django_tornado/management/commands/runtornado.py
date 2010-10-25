@@ -23,24 +23,46 @@ class Command(BaseCommand):
             help="Tells Tornado to NOT keep alive http connections."),
     )
     help = "Starts a Tornado Web."
-    args = '[optional port number, or ipaddr:port]'
+    args = '[optional port number or ipaddr:port] (one or more, will start multiple servers)'
 
     # Validation is called explicitly each time the server is reloaded.
     requires_model_validation = False
  
-    def handle(self, addrport='', *args, **options):
-        import django
-        from django.core.handlers.wsgi import WSGIHandler
-        from tornado import httpserver, wsgi, ioloop, web
- 
+    def handle(self, *addrport, **options):
         # reopen stdout/stderr file descriptor with write mode
         # and 0 as the buffer size (unbuffered).
         # XXX: why?
         sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
         sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
  
-        if args:
+        if len(addrport) == 0 :
             raise CommandError('Usage is runserver %s' % self.args)
+
+        if len(addrport) == 1 :
+            self.run_one(addrport[0], **options)
+        else :
+            from multiprocessing import Process
+
+            plist = []
+            for ap in addrport :
+                p = Process(target=self.run_one, args=(ap,), kwargs=options)
+                p.start()
+                plist.append(p)
+
+            # for p in plist : plist.terminate()
+
+            while plist :
+                if plist[0].exitcode is None :
+                    plist.pop(0)
+                else :
+                    plist[0].join()
+            
+
+    def run_one(self, addrport, **options) :
+        import django
+        from django.core.handlers.wsgi import WSGIHandler
+        from tornado import httpserver, wsgi, ioloop, web
+
         if not addrport:
             addr = ''
             port = '8000'
