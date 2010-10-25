@@ -10,7 +10,7 @@ Instructions
 ============
 
  1. ``cd myproject``
- 2. ``python manage.py runtornado --reload``
+ 2. ``python manage.py runtornado --reload 8000``
  3. Go to: http://localhost:8000/
 
 Now you have a working chat server -- this is based on the NodeJS chat server, UI primarily.
@@ -49,6 +49,29 @@ it is assumed that you're doing async response processing.
             handler.finish({ 'messages': messages, 'rss' : channel.size() })
 
         channel.query(handler.async_callback(on_new_messages), since)
+
+Advanced Usage
+==============
+
+Since Tornado is a single threaded server which blocks on long operations (e.g. slow DB queries) it''s useful to 
+run multiple servers at the same time.  That''s now supported on the command line, for 
+
+     python manage.py runtornado 8000 8001 8002 8003
+
+Which enables the following nginx configuration (skipping lots of details)
+
+    upstream frontends {
+        server 127.0.0.1:8000;
+        server 127.0.0.1:8001;
+        server 127.0.0.1:8002;
+        server 127.0.0.1:8003;
+    }
+
+    ...
+
+    location / {
+        proxy_pass http://frontends;
+    }
 
 Acknowledgements
 ================
