@@ -207,10 +207,16 @@ class DjangoHandler(tornado.web.RequestHandler, base.BaseHandler) :
         for h in response.items() :
             self.set_header(h[0], h[1])
 
+        """
         if not hasattr(self, "_new_cookies"):
             self._new_cookies = []
         self._new_cookies.append(response.cookies)
-
+        """
+        #Tornado 2.3 has changed the _new_cookies methods. Its not an array.
+        # revert back to old method
+        for c in response.cookies.values():
+            self.set_header('Set-Cookie', str(c.output(header='')))
+            
         self.write(response.content)
         self.finish()
 
