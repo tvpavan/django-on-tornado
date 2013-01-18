@@ -207,16 +207,15 @@ class DjangoHandler(tornado.web.RequestHandler, base.BaseHandler) :
         for h in response.items() :
             self.set_header(h[0], h[1])
 
-        """
-        if not hasattr(self, "_new_cookies"):
-            self._new_cookies = []
-        self._new_cookies.append(response.cookies)
-        """
-        #Tornado 2.3 has changed the _new_cookies methods. Its not an array.
-        # revert back to old method
         for c in response.cookies.values():
             self.set_header('Set-Cookie', str(c.output(header='')))
-            
+
+        """
+        if  hasattr(self, "_new_cookies"):
+            print self._new_cookies
+        self._new_cookies = response.cookies
+        """
+
         self.write(response.content)
         self.finish()
 
@@ -289,6 +288,8 @@ class DjangoHandler(tornado.web.RequestHandler, base.BaseHandler) :
                         view_name = callback.__class__.__name__ + '.__call__' # If it's a class
                     raise ValueError("The view %s.%s didn't return an HttpResponse object." % (callback.__module__, view_name))
 
+                elif response == 0:
+                    return
                 return response
             except http.Http404, e:
                 if settings.DEBUG:
